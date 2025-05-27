@@ -3,55 +3,73 @@
     <h1 class="text-2xl mb-4">
       {{ isEdit ? "Edit Template" : "Create Template" }}
     </h1>
-    <form @submit.prevent="save">
-      <div class="mb-2">
-        <label class="block mb-1">Name *</label>
-        <input v-model="form.name" class="border p-2 w-full" required />
+    <form @submit.prevent="save" class="space-y-4">
+      <div>
+        <label class="block mb-1 font-medium">Name *</label>
+        <input 
+          v-model="form.name" 
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+          required 
+        />
       </div>
-      <div class="mb-2">
-        <label class="block mb-1">Tags (comma separated)</label>
-        <input v-model="form.tags" class="border p-2 w-full" />
+      <div>
+        <label class="block mb-1 font-medium">Tags (comma separated)</label>
+        <input 
+          v-model="form.tags" 
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+        />
       </div>
-      <div class="mb-2">
-        <label class="block mb-1">Width *</label>
+      <div>
+        <label class="block mb-1 font-medium">Width *</label>
         <input
           v-model.number="form.width"
           type="number"
-          class="border p-2 w-full"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           required
         />
       </div>
-      <div class="mb-2">
-        <label class="block mb-1">description</label>
+      <div>
+        <label class="block mb-1 font-medium">Description</label>
         <input
-          v-model.number="form.description"
-          class="border p-2 w-full"
+          v-model="form.description"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
         />
       </div>
-      <div class="mb-2">
-        <label class="block mb-1">Height *</label>
+      <div>
+        <label class="block mb-1 font-medium">Height *</label>
         <input
           v-model.number="form.height"
           type="number"
-          class="border p-2 w-full"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           required
         />
       </div>
-      <div class="mb-2">
-        <label class="block mb-1">Preview Image URL</label>
-        <input v-model="form.preview_image" class="border p-2 w-full" />
+      <div>
+        <label class="block mb-1 font-medium">Preview Image URL</label>
+        <input 
+          v-model="form.preview_image" 
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+        />
       </div>
-      <div class="mt-4">
-        <button type="submit" class="bg-blue-500 text-black px-4 py-2 rounded">
-          Save
+      <div class="flex gap-4">
+        <button 
+          type="submit" 
+          class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          :disabled="store.isLoading"
+        >
+          {{ store.isLoading ? 'Saving...' : 'Save' }}
         </button>
         <button
           @click="$router.push('/')"
           type="button"
-          class="ml-2 bg-gray-500 text-black px-4 py-2 rounded"
+          class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          :disabled="store.isLoading"
         >
           Cancel
         </button>
+      </div>
+      <div v-if="store.error" class="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
+        {{ store.error }}
       </div>
     </form>
   </div>
@@ -61,6 +79,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMainStore } from "../store";
+import LoadingOverlay from "../components/LoadingOverlay.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -73,6 +92,7 @@ const form = ref({
   tags: "",
   width: null,
   height: null,
+  description: "",
   preview_image: "",
 });
 
@@ -86,33 +106,40 @@ onMounted(() => {
       form.value = {
         id: template.id,
         name: template.name,
-        description: template.description,
-        tags: template.tags.join(", "),
-        width: template.width,
-        height: template.height,
-        preview_image: template.preview_image,
+        description: template.description || "",
+        tags: Array.isArray(template.tags) ? template.tags.join(", ") : "",
+        width: parseInt(template.width),
+        height: parseInt(template.height),
+        preview_image: template.preview_image || "",
       };
     }
   }
 });
 
-const save = () => {
+const save = async () => {
   if (!form.value.name.trim()) {
     alert("Name is required");
     return;
   }
 
-  form.width += "px"
-  form.height += "px"
-  const tagsArray = form.value.tags
-    .split(",")
-    .map((t) => t.trim())
-    .filter((t) => t);
-  const newTemplate = {
-    ...form.value,
-    tags: tagsArray,
-  };
-  store.saveTemplate(newTemplate);
-  router.push("/");
+  try {
+    const tagsArray = form.value.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+
+    const newTemplate = {
+      ...form.value,
+      width: `${form.value.width}px`,
+      height: `${form.value.height}px`,
+      tags: tagsArray,
+    };
+
+    await store.saveTemplate(newTemplate);
+    router.push("/");
+  } catch (error) {
+    // Error is already handled in the store
+    console.error("Save failed:", error);
+  }
 };
 </script>

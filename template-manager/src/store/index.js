@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import axios from "axios";
 
+const API_BASE = '/AiScreenTemplates/api/v1';
+
 export const useMainStore = defineStore("main", {
   state: () => ({
     templates: [],
@@ -8,12 +10,16 @@ export const useMainStore = defineStore("main", {
     authToken: localStorage.getItem("token") || "",
     user: null,
     isAuthenticated: !!localStorage.getItem("token"),
+    isLoading: false,
+    error: null
   }),
   actions: {
     async login(userEmail, userPassword) {
+      this.isLoading = true;
+      this.error = null;
       try {
         const response = await axios.post(
-          "https://dev-api.aiscreen.io/api/v1/login",
+          `${API_BASE}/login`,
           {
             email: userEmail,
             password: userPassword,
@@ -23,33 +29,51 @@ export const useMainStore = defineStore("main", {
         this.isAuthenticated = true;
         localStorage.setItem("token", this.authToken);
       } catch (e) {
+        this.isLoading = false;
         console.error("Login error", e);
+        this.error = e.response?.data?.message || "Login failed";
         this.isAuthenticated = false;
+        throw e;
+      } finally {
+        this.isLoading = false;
       }
     },
 
     async fetchTemplates() {
-      try {
-        const response = await axios.get("https://dev-api.aiscreen.io/api/v1/canvas_templates", {
-          headers: { Authorization: `Bearer ${this.authToken}` },
-        });
-        this.templates = response.data;
-        this.extractTags();
-      } catch (e) {
-        console.error("Fetch templates error", e);
+      if (this.authToken) {
+        this.isLoading = true;
+        this.error = null;
+        try {
+          const response = await axios.get(`${API_BASE}/canvas_templates`, {
+            headers: { Authorization: `Bearer ${this.authToken}` },
+          });
+          this.templates = response.data;
+          this.extractTags();
+        } catch (e) {
+          console.error("Fetch templates error", e);
+          this.error = e.response?.data?.message || "Failed to fetch templates";
+          throw e;
+        } finally {
+          this.isLoading = false;
+        }
       }
     },
+
     extractTags() {
       const tagsSet = new Set();
       this.templates.forEach((t) => {
-        t.tags.forEach((tag) => tagsSet.add(tag));
+        if (Array.isArray(t.tags)) {
+          t.tags.forEach((tag) => tagsSet.add(tag));
+        }
       });
       this.tags = Array.from(tagsSet);
     },
+
     async deleteTemplate(id) {
+      this.isLoading = true;
+      this.error = null;
       try {
-        console.log("Auth token delete:", this.authToken);
-        await axios.delete(`https://dev-api.aiscreen.io/api/v1/canvas_templates`, {
+        await axios.delete(`${API_BASE}/canvas_templates`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${this.authToken}`,
@@ -59,24 +83,30 @@ export const useMainStore = defineStore("main", {
         this.templates = this.templates.filter((t) => t.id !== id);
       } catch (e) {
         console.error("Delete error", e);
+        this.error = e.response?.data?.message || "Failed to delete template";
+        throw e;
+      } finally {
+        this.isLoading = false;
       }
     },
+
     async saveTemplate(template) {
+      this.isLoading = true;
+      this.error = null;
       try {
+        const templateData = {
+          name: template.name,
+          description: template.description || "",
+          width: template.width,
+          height: template.height,
+          preview_image: template.preview_image || "",
+          objects: "",
+          tags: template.tags || [],
+        };
         if (template.id) {
-          console.log("Auth token save existing:", this.authToken);
-          // Update existing
           await axios.put(
-            `https://dev-api.aiscreen.io/api/v1/canvas_templates/${template.id}`,
-            {
-              name: template.name,
-              description: template.description || "",
-              width: template.width,
-              height: template.height,
-              preview_image: template.preview_image || "",
-              objects: "",
-              tags: template.tags || null,
-            },
+            `${API_BASE}/canvas_templates/${template.id}`,
+            templateData,
             {
               headers: {
                 "Content-Type": "application/json",
@@ -85,18 +115,9 @@ export const useMainStore = defineStore("main", {
             },
           );
         } else {
-          console.log("Auth token create new:", this.authToken);
           await axios.post(
-            `https://dev-api.aiscreen.io/api/v1/canvas_templates/`, 
-            {
-              name: template.name,
-              description: template.description || "",
-              width: template.width,
-              height: template.height,
-              preview_image: template.preview_image || "",
-              objects: "",
-              tags: template.tags || null,
-            },
+            `${API_BASE}/canvas_templates/`,
+            templateData,
             {
               headers: {
                 "Content-Type": "application/json",
@@ -108,7 +129,11 @@ export const useMainStore = defineStore("main", {
         await this.fetchTemplates();
       } catch (e) {
         console.error("Save template error", e);
+        this.error = e.response?.data?.message || "Failed to save template";
+        throw e;
+      } finally {
+        this.isLoading = false;
       }
-    },
+    }
   },
 });
