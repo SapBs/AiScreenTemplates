@@ -30,7 +30,7 @@ export const useMainStore = defineStore("main", {
 
     async fetchTemplates() {
       try {
-        const response = await axios.get("/api/v1/canvas_templates", {
+        const response = await axios.get("https://dev-api.aiscreen.io/api/v1/canvas_templates", {
           headers: { Authorization: `Bearer ${this.authToken}` },
         });
         this.templates = response.data;
@@ -49,7 +49,7 @@ export const useMainStore = defineStore("main", {
     async deleteTemplate(id) {
       try {
         console.log("Auth token delete:", this.authToken);
-        await axios.delete(`/api/v1/canvas_templates`, {
+        await axios.delete(`https://dev-api.aiscreen.io/api/v1/canvas_templates`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${this.authToken}`,
@@ -67,7 +67,7 @@ export const useMainStore = defineStore("main", {
           console.log("Auth token save existing:", this.authToken);
           // Update existing
           await axios.put(
-            `/api/v1/canvas_templates/${template.id}`,
+            `https://dev-api.aiscreen.io/api/v1/canvas_templates/${template.id}`,
             {
               name: template.name,
               description: template.description || "",
@@ -87,7 +87,7 @@ export const useMainStore = defineStore("main", {
         } else {
           console.log("Auth token create new:", this.authToken);
           await axios.post(
-            `/api/v1/canvas_templates/`, // URL
+            `https://dev-api.aiscreen.io/api/v1/canvas_templates/`, 
             {
               name: template.name,
               description: template.description || "",
