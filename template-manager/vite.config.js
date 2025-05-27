@@ -6,14 +6,14 @@ import vue from "@vitejs/plugin-vue";
 export default defineConfig({
   plugins: [vue()],
   base: '/AiScreenTemplates/',
-  server: {
-    proxy: {
-      "/api": {
-        target: "https://dev-api.aiscreen.io/api",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
-        secure: false,
-      },
-    },
-  },
+  // server: {
+  //   proxy: {
+  //     "/api": {
+  //       target: "https://dev-api.aiscreen.io/api",
+  //       changeOrigin: true,
+  //       rewrite: (path) => path.replace(/^\/api/, ""),
+  //       secure: false,
+  //     },
+  //   },
+  // },
 });
