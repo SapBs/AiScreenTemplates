@@ -30,12 +30,9 @@ export const useMainStore = defineStore("main", {
 
     async fetchTemplates() {
       try {
-        const response = await axios.get(
-          "/api/v1/canvas_templates",
-          {
-            headers: { Authorization: `Bearer ${this.authToken}` },
-          },
-        );
+        const response = await axios.get("/api/v1/canvas_templates", {
+          headers: { Authorization: `Bearer ${this.authToken}` },
+        });
         this.templates = response.data;
         this.extractTags();
       } catch (e) {
@@ -52,16 +49,13 @@ export const useMainStore = defineStore("main", {
     async deleteTemplate(id) {
       try {
         console.log("Auth token delete:", this.authToken);
-        await axios.delete(
-          `/api/v1/canvas_templates`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${this.authToken}`,
-            },
-            data: { id },
+        await axios.delete(`/api/v1/canvas_templates`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.authToken}`,
           },
-        );
+          data: { id },
+        });
         this.templates = this.templates.filter((t) => t.id !== id);
       } catch (e) {
         console.error("Delete error", e);
@@ -73,27 +67,45 @@ export const useMainStore = defineStore("main", {
           console.log("Auth token save existing:", this.authToken);
           // Update existing
           await axios.put(
-        `/api/v1/canvas_templates/${template.id}`,
-        template,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.authToken}`,
-          }
-        }
-      );
+            `/api/v1/canvas_templates/${template.id}`,
+            {
+              name: template.name,
+              description: template.description || "",
+              width: template.width,
+              height: template.height,
+              preview_image: template.preview_image || "",
+              objects: "",
+              tags: template.tags || null,
+            },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.authToken}`,
+              },
+            },
+          );
         } else {
           console.log("Auth token create new:", this.authToken);
-          // Create new
           await axios.post(
-            `/api/v1/canvas_templates/`,
-            template,
+            `/api/v1/canvas_templates/`, // URL
             {
-              headers: { Authorization: `Bearer ${this.authToken}` },
+              name: template.name,
+              description: template.description || "",
+              width: template.width,
+              height: template.height,
+              preview_image: template.preview_image || "",
+              objects: "",
+              tags: template.tags || null,
+            },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.authToken}`,
+              },
             },
           );
         }
-        this.fetchTemplates();
+        await this.fetchTemplates();
       } catch (e) {
         console.error("Save template error", e);
       }

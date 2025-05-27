@@ -18,6 +18,14 @@
           v-model.number="form.width"
           type="number"
           class="border p-2 w-full"
+          required
+        />
+      </div>
+      <div class="mb-2">
+        <label class="block mb-1">description</label>
+        <input
+          v-model.number="form.description"
+          class="border p-2 w-full"
         />
       </div>
       <div class="mb-2">
@@ -26,6 +34,7 @@
           v-model.number="form.height"
           type="number"
           class="border p-2 w-full"
+          required
         />
       </div>
       <div class="mb-2">
@@ -77,6 +86,7 @@ onMounted(() => {
       form.value = {
         id: template.id,
         name: template.name,
+        description: template.description,
         tags: template.tags.join(", "),
         width: template.width,
         height: template.height,
@@ -91,6 +101,9 @@ const save = () => {
     alert("Name is required");
     return;
   }
+
+  form.width += "px"
+  form.height += "px"
   const tagsArray = form.value.tags
     .split(",")
     .map((t) => t.trim())
