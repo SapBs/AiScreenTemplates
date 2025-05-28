@@ -134,22 +134,17 @@ export const useMainStore = defineStore("main", {
           previewImageUrl = await this.uploadMedia(template.preview_image);
         }
     
-        const formData = new FormData();
-        formData.append('name', template.name);
-        formData.append('description', template.description || '');
-        formData.append('width', `${template.width}`);
-        formData.append('height', `${template.height}`);
-        formData.append('objects', '');
-      
-        if (Array.isArray(template.tags)) {
-          template.tags.forEach(tag => formData.append('tags[]', tag));
-        }
+        const templateData = {
+          name: template.name,
+          description: template.description || '',
+          width: `${template.width}`,
+          height: `${template.height}`,
+          objects: '',
+          tags: template.tags || [],
+          preview_image: previewImageUrl || ''
+        };
     
-        if (previewImageUrl) {
-          formData.append('preview_image', previewImageUrl);
-        }
-    
-        return this.sendTemplateRequest(template.id, formData);
+        return this.sendTemplateRequest(template.id, templateData);
       } catch (e) {
         console.error("Save template error", e);
         this.error = e.response?.data?.message || "Failed to save template";
@@ -159,10 +154,11 @@ export const useMainStore = defineStore("main", {
       }
     },
     
-    async sendTemplateRequest(templateId, formData) {
+    async sendTemplateRequest(templateId, templateData) {
       const config = {
         headers: { 
           Authorization: `Bearer ${this.authToken}`,
+          'Content-Type': 'application/json'
         },
       };
     
@@ -171,13 +167,13 @@ export const useMainStore = defineStore("main", {
           config.params = { _method: 'PATCH' };
           await axios.patch(
             `${API_BASE}/canvas_templates/${templateId}`,
-            formData,
+            templateData,
             config
           );
         } else {
           await axios.post(
             `${API_BASE}/canvas_templates`,
-            formData,
+            templateData,
             config
           );
         }
