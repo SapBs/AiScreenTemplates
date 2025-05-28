@@ -27,10 +27,23 @@
       <button
         type="submit"
         class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        :disabled="store.isLoading"
       >
-        Login
+        {{ store.isLoading ? 'Logging in...' : 'Login' }}
       </button>
     </form>
+
+    <!-- Error Messages -->
+    <div v-if="store.error" class="mt-4 p-4 bg-red-100 text-red-700 rounded">
+      {{ store.error }}
+    </div>
+
+    <!-- Links -->
+    <div class="mt-4 text-center">
+      <router-link to="/register" class="text-blue-500 hover:text-blue-600">
+        Don't have an account? Register
+      </router-link>
+    </div>
   </div>
 </template>
 
@@ -50,12 +63,9 @@ const handleLogin = async () => {
     await store.login(email.value, password.value);
     if (store.authToken) {
       router.push("/");
-    } else {
-      alert("Login failed");
     }
   } catch (e) {
-    alert("Error during login");
-    console.error(e);
+    console.error("Login error:", e);
   }
 };
 </script>
