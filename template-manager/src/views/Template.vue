@@ -163,13 +163,17 @@ const handleImageUrlChange = async () => {
     if (!response.ok) throw new Error('Failed to fetch image');
     
     const blob = await response.blob();
+    if (!blob.type.startsWith('image/')) {
+      throw new Error('The URL must point to an image file');
+    }
+    
     imagePreview.value = URL.createObjectURL(blob);
 
     // Create a File object from the blob
     const file = new File([blob], 'preview.jpg', { type: blob.type });
     form.value.preview_image = file;
   } catch (error) {
-    imageError.value = "Failed to load image. Please check the URL.";
+    imageError.value = error.message || "Failed to load image. Please check the URL.";
     imagePreview.value = "";
     form.value.preview_image = "";
     console.error("Image loading error:", error);
@@ -184,6 +188,12 @@ const handleFileUpload = (event) => {
 
   if (!file.type.startsWith('image/')) {
     imageError.value = "Please select an image file";
+    return;
+  }
+
+  // Check file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    imageError.value = "Image size should be less than 5MB";
     return;
   }
 

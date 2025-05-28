@@ -3,8 +3,8 @@ import axios from "axios";
 
 const API_BASE = 'https://dev-api.aiscreen.io/api/v1';
 
-// Configure axios defaults
-axios.defaults.headers.common['Content-Type'] = 'application/json';
+// Remove the global Content-Type header since we're using FormData
+// axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 export const useMainStore = defineStore("main", {
   state: () => ({
@@ -28,6 +28,10 @@ export const useMainStore = defineStore("main", {
         const response = await axios.post(`${API_BASE}/login`, {
           email: userEmail,
           password: userPassword,
+        }, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
         this.authToken = response.data.token;
         this.isAuthenticated = true;
@@ -49,7 +53,10 @@ export const useMainStore = defineStore("main", {
       this.error = null;
       try {
         const response = await axios.get(`${API_BASE}/canvas_templates`, {
-          headers: { Authorization: `Bearer ${this.authToken}` },
+          headers: { 
+            Authorization: `Bearer ${this.authToken}`,
+            'Content-Type': 'application/json'
+          },
         });
         this.templates = response.data;
         this.extractTags();
@@ -96,25 +103,35 @@ export const useMainStore = defineStore("main", {
       }
 
       const formData = new FormData();
+      // The API expects the file to be sent with the key 'file'
       formData.append('file', file);
+      formData.append('parent_uuid', ''); // Add empty parent_uuid as shown in the curl example
 
       try {
         const response = await axios.post(`${API_BASE}/media/file`, formData, {
           headers: {
             Authorization: `Bearer ${this.authToken}`,
-            // Don't set Content-Type here, let the browser set it with the boundary for FormData
+            'Content-Type': 'multipart/form-data',
+            'accept': 'application/json'
           },
         });
         
-        // Check if we have a valid response with the URL
-        if (response.data && response.data.data && response.data.data.url) {
-          return response.data.data.url;
+        // Check if we have a valid response with the link
+        if (response.data && response.data.link) {
+          return response.data.link;
         } else {
           throw new Error('Invalid response format from media upload');
         }
       } catch (e) {
         console.error("Media upload error", e);
-        this.error = e.response?.data?.message || "Failed to upload media";
+        if (e.response?.data?.errors) {
+          // Handle validation errors
+          const errors = e.response.data.errors;
+          const errorMessage = Object.values(errors).flat().join(', ');
+          this.error = errorMessage;
+        } else {
+          this.error = e.response?.data?.message || "Failed to upload media";
+        }
         throw e;
       }
     },
