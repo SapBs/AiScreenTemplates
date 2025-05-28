@@ -5,7 +5,7 @@
         <div class="flex justify-between h-16">
           <div class="flex items-center">
             <h1 class="text-xl font-semibold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
-              Template Manager
+              Template Manager v2
             </h1>
           </div>
           <div class="flex items-center space-x-4">
