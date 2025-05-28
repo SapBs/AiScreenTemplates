@@ -110,7 +110,15 @@ export const useMainStore = defineStore("main", {
           formData.append('preview_image', template.preview_image);
         }
     
-        return this.sendTemplateRequest(template.id, formData);
+        const response = await this.sendTemplateRequest(template.id, formData);
+        
+        // Add a delay before fetching templates to allow image processing
+        if (template.preview_image instanceof File) {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+        }
+        
+        await this.fetchTemplates();
+        return response.data;
       } catch (e) {
         console.error("Save template error", e);
         this.error = e.response?.data?.message || "Failed to save template";
