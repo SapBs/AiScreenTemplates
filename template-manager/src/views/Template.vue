@@ -45,14 +45,23 @@
         />
       </div>
       <div>
-        <label class="block mb-1 font-medium">Preview Image URL</label>
+        <label class="block mb-1 font-medium">Preview Image</label>
         <div class="space-y-2">
-          <input
-            v-model="imageUrl"
-            @blur="handleImageUrlChange"
-            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="Enter image URL"
-          />
+          <div class="flex gap-2">
+            <input
+              v-model="imageUrl"
+              @blur="handleImageUrlChange"
+              class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="Enter image URL"
+            />
+            <span class="px-3 py-2 text-gray-500">or</span>
+            <input
+              type="file"
+              accept="image/*"
+              @change="handleFileUpload"
+              class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
           <div v-if="imagePreview" class="mt-2">
             <img :src="imagePreview" alt="Preview" class="max-h-40 rounded-lg" />
           </div>
@@ -158,6 +167,21 @@ const handleImageUrlChange = async () => {
     form.value.preview_image = "";
     console.error("Image loading error:", error);
   }
+};
+
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    imageError.value = "Please select an image file";
+    return;
+  }
+
+  imageError.value = "";
+  imagePreview.value = URL.createObjectURL(file);
+  form.value.preview_image = file;
+  imageUrl.value = ""; // Clear URL input when file is selected
 };
 
 const save = async () => {

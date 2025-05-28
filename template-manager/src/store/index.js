@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import axios from "axios";
 
-const API_BASE = '/AiScreenTemplates/api/v1';
+const API_BASE = 'https://dev-api.aiscreen.io/api/v1';
 
 // Configure axios defaults
 axios.defaults.headers.common['Content-Type'] = 'application/json';
@@ -94,25 +94,34 @@ export const useMainStore = defineStore("main", {
       this.isLoading = true;
       this.error = null;
     
-      const payload = {
-        name: template.name,
-        description: template.description || '',
-        width: `${template.width}`,
-        height: `${template.height}`,
-        objects: '',
-        tags: template.tags || [],
-      };
-    
-      if (typeof template.preview_image === 'string') {
-        payload.preview_image = template.preview_image;
+      const formData = new FormData();
+      formData.append('name', template.name);
+      formData.append('description', template.description || '');
+      formData.append('width', `${template.width}`);
+      formData.append('height', `${template.height}`);
+      formData.append('objects', '');
+      
+      // Handle tags array
+      if (Array.isArray(template.tags)) {
+        template.tags.forEach(tag => formData.append('tags[]', tag));
       }
     
-      return this.sendTemplateRequest(template.id, payload);
+      // Handle preview_image
+      if (template.preview_image instanceof File) {
+        formData.append('preview_image', template.preview_image);
+      } else if (typeof template.preview_image === 'string') {
+        formData.append('preview_image', template.preview_image);
+      }
+    
+      return this.sendTemplateRequest(template.id, formData);
     },
     
-    async sendTemplateRequest(templateId, payload) {
+    async sendTemplateRequest(templateId, formData) {
       const config = {
-        headers: { Authorization: `Bearer ${this.authToken}` },
+        headers: { 
+          Authorization: `Bearer ${this.authToken}`,
+          // Don't set Content-Type here, let the browser set it with the boundary for FormData
+        },
       };
     
       try {
@@ -120,13 +129,13 @@ export const useMainStore = defineStore("main", {
           config.params = { _method: 'PATCH' };
           await axios.patch(
             `${API_BASE}/canvas_templates/${templateId}`,
-            payload,
+            formData,
             config
           );
         } else {
           await axios.post(
             `${API_BASE}/canvas_templates/`,
-            payload,
+            formData,
             config
           );
         }
