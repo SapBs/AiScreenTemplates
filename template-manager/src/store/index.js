@@ -94,29 +94,22 @@ export const useMainStore = defineStore("main", {
       this.isLoading = true;
       this.error = null;
       try {
-        const formData = new FormData();
-        formData.append('name', template.name);
-        formData.append('description', template.description || '');
-        formData.append('width', template.width);
-        formData.append('height', template.height);
-        formData.append('type', 'canvas');
-        formData.append('objects', '{}');
-        
-        if (template.preview_image instanceof File) {
-          formData.append('preview_image', template.preview_image);
-        }
-        
-        if (Array.isArray(template.tags)) {
-          template.tags.forEach(tag => formData.append('tags[]', tag));
-        }
-
+        const templateData = {
+          name: template.name,
+          description: template.description || "",
+          width: template.width,
+          height: template.height,
+          preview_image: template.preview_image || "",
+          objects: "",
+          tags: template.tags || [],
+        };
         if (template.id) {
           await axios.put(
             `${API_BASE}/canvas_templates/${template.id}`,
-            formData,
+            templateData,
             {
               headers: {
-                'Content-Type': 'multipart/form-data',
+                "Content-Type": "application/json",
                 Authorization: `Bearer ${this.authToken}`,
               },
             },
@@ -124,10 +117,10 @@ export const useMainStore = defineStore("main", {
         } else {
           await axios.post(
             `${API_BASE}/canvas_templates/`,
-            formData,
+            templateData,
             {
               headers: {
-                'Content-Type': 'multipart/form-data',
+                "Content-Type": "application/json",
                 Authorization: `Bearer ${this.authToken}`,
               },
             },

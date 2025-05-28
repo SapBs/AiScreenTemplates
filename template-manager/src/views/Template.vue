@@ -45,13 +45,13 @@
         />
       </div>
       <div>
-        <label class="block mb-1 font-medium">Preview Image</label>
+        <label class="block mb-1 font-medium">Preview Image URL</label>
         <div class="space-y-2">
           <input
-            type="file"
-            @change="handleFileUpload"
-            accept="image/*"
+            v-model="imageUrl"
+            @blur="handleImageUrlChange"
             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            placeholder="Enter image URL"
           />
           <div v-if="imagePreview" class="mt-2">
             <img :src="imagePreview" alt="Preview" class="max-h-40 rounded-lg" />
@@ -94,6 +94,7 @@ import LoadingOverlay from "../components/LoadingOverlay.vue";
 const route = useRoute();
 const router = useRouter();
 const store = useMainStore();
+const imageUrl = ref("");
 const imagePreview = ref("");
 const imageError = ref("");
 
@@ -105,7 +106,7 @@ const form = ref({
   width: null,
   height: null,
   description: "",
-  preview_image: null,
+  preview_image: "",
 });
 
 onMounted(() => {
@@ -122,34 +123,41 @@ onMounted(() => {
         tags: Array.isArray(template.tags) ? template.tags.join(", ") : "",
         width: parseInt(template.width),
         height: parseInt(template.height),
-        preview_image: null,
+        preview_image: template.preview_image || "",
       };
       if (template.preview_image) {
         imagePreview.value = template.preview_image;
+        imageUrl.value = template.preview_image;
       }
     }
   }
 });
 
-const handleFileUpload = (event) => {
-  const file = event.target.files[0];
-  if (!file) {
+const handleImageUrlChange = async () => {
+  if (!imageUrl.value) {
     imagePreview.value = "";
-    form.value.preview_image = null;
+    form.value.preview_image = "";
     imageError.value = "";
     return;
   }
 
-  if (!file.type.startsWith('image/')) {
-    imageError.value = "Please select an image file";
-    imagePreview.value = "";
-    form.value.preview_image = null;
-    return;
-  }
+  try {
+    imageError.value = "";
+    const response = await fetch(imageUrl.value);
+    if (!response.ok) throw new Error('Failed to fetch image');
+    
+    const blob = await response.blob();
+    imagePreview.value = URL.createObjectURL(blob);
 
-  imageError.value = "";
-  form.value.preview_image = file;
-  imagePreview.value = URL.createObjectURL(file);
+    // Create a File object from the blob
+    const file = new File([blob], 'preview.jpg', { type: blob.type });
+    form.value.preview_image = file;
+  } catch (error) {
+    imageError.value = "Failed to load image. Please check the URL.";
+    imagePreview.value = "";
+    form.value.preview_image = "";
+    console.error("Image loading error:", error);
+  }
 };
 
 const save = async () => {
