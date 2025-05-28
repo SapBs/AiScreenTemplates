@@ -1,14 +1,7 @@
 import { defineStore } from "pinia";
 import axios from "axios";
 
-// Remove trailing slash to prevent redirects
 const API_BASE = 'https://dev-api.aiscreen.io/api/v1';
-
-// Configure axios defaults for CORS
-axios.defaults.withCredentials = true;
-
-// Remove the global Content-Type header since we're using FormData
-// axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 export const useMainStore = defineStore("main", {
   state: () => ({
@@ -32,11 +25,6 @@ export const useMainStore = defineStore("main", {
         const response = await axios.post(`${API_BASE}/login`, {
           email: userEmail,
           password: userPassword,
-        }, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
         });
         this.authToken = response.data.token;
         this.isAuthenticated = true;
@@ -58,11 +46,7 @@ export const useMainStore = defineStore("main", {
       this.error = null;
       try {
         const response = await axios.get(`${API_BASE}/canvas_templates`, {
-          headers: { 
-            Authorization: `Bearer ${this.authToken}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
+          headers: { Authorization: `Bearer ${this.authToken}` },
         });
         this.templates = response.data;
         this.extractTags();
@@ -109,9 +93,8 @@ export const useMainStore = defineStore("main", {
       }
 
       const formData = new FormData();
-      // The API expects the file to be sent with the key 'file'
       formData.append('file', file);
-      formData.append('parent_uuid', ''); // Add empty parent_uuid as shown in the curl example
+      formData.append('parent_uuid', '');
 
       try {
         const response = await axios.post(`${API_BASE}/media/file`, formData, {
@@ -122,7 +105,6 @@ export const useMainStore = defineStore("main", {
           },
         });
         
-        // Check if we have a valid response with the link
         if (response.data && response.data.link) {
           return response.data.link;
         } else {
@@ -131,7 +113,6 @@ export const useMainStore = defineStore("main", {
       } catch (e) {
         console.error("Media upload error", e);
         if (e.response?.data?.errors) {
-          // Handle validation errors
           const errors = e.response.data.errors;
           const errorMessage = Object.values(errors).flat().join(', ');
           this.error = errorMessage;
@@ -149,7 +130,6 @@ export const useMainStore = defineStore("main", {
       try {
         let previewImageUrl = template.preview_image;
         
-        // If preview_image is a File, upload it first
         if (template.preview_image instanceof File) {
           previewImageUrl = await this.uploadMedia(template.preview_image);
         }
@@ -160,17 +140,11 @@ export const useMainStore = defineStore("main", {
         formData.append('width', `${template.width}`);
         formData.append('height', `${template.height}`);
         formData.append('objects', '');
-        
-        // Handle tags as string array
+      
         if (Array.isArray(template.tags)) {
           template.tags.forEach(tag => formData.append('tags[]', tag));
-        } else if (typeof template.tags === 'string') {
-          // If it's a string, split by comma and trim each tag
-          const tagsArray = template.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
-          tagsArray.forEach(tag => formData.append('tags[]', tag));
         }
     
-        // Add the preview image URL
         if (previewImageUrl) {
           formData.append('preview_image', previewImageUrl);
         }
@@ -189,7 +163,6 @@ export const useMainStore = defineStore("main", {
       const config = {
         headers: { 
           Authorization: `Bearer ${this.authToken}`,
-          'Accept': 'application/json'
         },
       };
     
