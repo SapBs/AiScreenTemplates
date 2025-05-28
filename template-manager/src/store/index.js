@@ -161,9 +161,13 @@ export const useMainStore = defineStore("main", {
         formData.append('height', `${template.height}`);
         formData.append('objects', '');
         
-        // Handle tags array
+        // Handle tags as string array
         if (Array.isArray(template.tags)) {
           template.tags.forEach(tag => formData.append('tags[]', tag));
+        } else if (typeof template.tags === 'string') {
+          // If it's a string, split by comma and trim each tag
+          const tagsArray = template.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+          tagsArray.forEach(tag => formData.append('tags[]', tag));
         }
     
         // Add the preview image URL
