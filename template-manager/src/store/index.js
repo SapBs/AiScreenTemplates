@@ -48,6 +48,7 @@ export const useMainStore = defineStore("main", {
         const response = await axios.get(`${API_BASE}/canvas_templates`, {
           headers: { Authorization: `Bearer ${this.authToken}` },
         });
+        console.log('Templates response:', response.data);
         this.templates = response.data;
         this.extractTags();
       } catch (e) {
@@ -105,8 +106,8 @@ export const useMainStore = defineStore("main", {
           },
         });
         
-        if (response.data && response.data.link) {
-          return response.data.link;
+        if (response.data && response.data.preview_image) {
+          return response.data.preview_image;
         } else {
           throw new Error('Invalid response format from media upload');
         }
@@ -128,23 +129,18 @@ export const useMainStore = defineStore("main", {
       this.error = null;
     
       try {
-        let previewImageUrl = template.preview_image;
-        
+        const formData = new FormData();
+        formData.append('name', template.name);
+        formData.append('description', template.description || '');
+        formData.append('width', `${template.width}`);
+        formData.append('height', `${template.height}`);
+        formData.append('objects', '');
+        formData.append('tags', template.tags || []);
         if (template.preview_image instanceof File) {
-          previewImageUrl = await this.uploadMedia(template.preview_image);
+          formData.append('preview_image', template.preview_image);
         }
     
-        const templateData = {
-          name: template.name,
-          description: template.description || '',
-          width: `${template.width}`,
-          height: `${template.height}`,
-          objects: '',
-          tags: template.tags || [],
-          preview_image: previewImageUrl || ''
-        };
-    
-        return this.sendTemplateRequest(template.id, templateData);
+        return this.sendTemplateRequest(template.id, formData);
       } catch (e) {
         console.error("Save template error", e);
         this.error = e.response?.data?.message || "Failed to save template";
@@ -154,30 +150,31 @@ export const useMainStore = defineStore("main", {
       }
     },
     
-    async sendTemplateRequest(templateId, templateData) {
+    async sendTemplateRequest(templateId, formData) {
       const config = {
         headers: { 
           Authorization: `Bearer ${this.authToken}`,
-          'Content-Type': 'application/json'
         },
       };
     
       try {
+        let response;
         if (templateId) {
           config.params = { _method: 'PATCH' };
-          await axios.patch(
+          response = await axios.post(
             `${API_BASE}/canvas_templates/${templateId}`,
-            templateData,
+            formData,
             config
           );
         } else {
-          await axios.post(
+          response = await axios.post(
             `${API_BASE}/canvas_templates`,
-            templateData,
+            formData,
             config
           );
         }
         await this.fetchTemplates();
+        return response.data;
       } catch (e) {
         console.error("Save template error", e);
         this.error = e.response?.data?.message || "Failed to save template";

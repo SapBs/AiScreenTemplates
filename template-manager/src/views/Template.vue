@@ -52,16 +52,9 @@
             accept="image/*"
             @change="handleFileUpload"
             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            :disabled="isUploading"
           />
           <div v-if="imagePreview" class="mt-2">
             <img :src="imagePreview" alt="Preview" class="max-h-40 rounded-lg" />
-          </div>
-          <div v-if="imageError" class="text-sm text-red-600">
-            {{ imageError }}
-          </div>
-          <div v-if="isUploading" class="text-sm text-gray-600">
-            Uploading image...
           </div>
         </div>
       </div>
@@ -99,10 +92,6 @@ const route = useRoute();
 const router = useRouter();
 const store = useMainStore();
 const imagePreview = ref("");
-const imageError = ref("");
-const isUploading = ref(false);
-
-const isEdit = ref(false);
 const form = ref({
   id: null,
   name: "",
@@ -110,8 +99,10 @@ const form = ref({
   width: null,
   height: null,
   description: "",
-  preview_image: "",
+  preview_image: null,
 });
+
+const isEdit = ref(false);
 
 onMounted(() => {
   if (route.params.id) {
@@ -127,7 +118,7 @@ onMounted(() => {
         tags: Array.isArray(template.tags) ? template.tags.join(", ") : "",
         width: parseInt(template.width),
         height: parseInt(template.height),
-        preview_image: template.preview_image || "",
+        preview_image: template.preview_image || null,
       };
       if (template.preview_image) {
         imagePreview.value = template.preview_image;
@@ -139,15 +130,9 @@ onMounted(() => {
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
   if (!file) return;
-
-  if (!file.type.startsWith('image/')) {
-    imageError.value = "Please select an image file";
-    return;
-  }
-
-  imageError.value = "";
-  imagePreview.value = URL.createObjectURL(file);
+  
   form.value.preview_image = file;
+  imagePreview.value = URL.createObjectURL(file);
 };
 
 const save = async () => {
@@ -175,11 +160,11 @@ const save = async () => {
     console.error("Save failed:", error);
     // Show more detailed error message
     if (error.response?.data?.message) {
-      imageError.value = error.response.data.message;
+      imagePreview.value = "";
     } else if (error.message) {
-      imageError.value = error.message;
+      imagePreview.value = "";
     } else {
-      imageError.value = "Failed to save template. Please try again.";
+      imagePreview.value = "";
     }
   }
 };
