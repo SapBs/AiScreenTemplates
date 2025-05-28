@@ -91,7 +91,7 @@ const filteredTemplates = computed(() => {
   }
   if (selectedTags.value.length) {
     result = result.filter((t) =>
-      selectedTags.value.every((tag) => t.tags.includes(tag)),
+      selectedTags.value.every((tag) => t.tags?.includes(tag) ?? false),
     );
   }
   return result;

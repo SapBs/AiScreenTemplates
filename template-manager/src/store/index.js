@@ -88,42 +88,6 @@ export const useMainStore = defineStore("main", {
       }
     },
 
-    async uploadMedia(file) {
-      if (!(file instanceof File)) {
-        throw new Error('Invalid file object');
-      }
-
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('parent_uuid', '');
-
-      try {
-        const response = await axios.post(`${API_BASE}/media/file`, formData, {
-          headers: {
-            Authorization: `Bearer ${this.authToken}`,
-            'Content-Type': 'multipart/form-data',
-            'accept': 'application/json'
-          },
-        });
-        
-        if (response.data && response.data.preview_image) {
-          return response.data.preview_image;
-        } else {
-          throw new Error('Invalid response format from media upload');
-        }
-      } catch (e) {
-        console.error("Media upload error", e);
-        if (e.response?.data?.errors) {
-          const errors = e.response.data.errors;
-          const errorMessage = Object.values(errors).flat().join(', ');
-          this.error = errorMessage;
-        } else {
-          this.error = e.response?.data?.message || "Failed to upload media";
-        }
-        throw e;
-      }
-    },
-
     async saveTemplate(template) {
       this.isLoading = true;
       this.error = null;
@@ -135,7 +99,13 @@ export const useMainStore = defineStore("main", {
         formData.append('width', template.width);
         formData.append('height', template.height);
         formData.append('objects', '');
-        formData.append('tags', template.tags || []);
+        
+        if (Array.isArray(template.tags)) {
+          template.tags.forEach(tag => {
+            formData.append('tags[]', tag);
+          });
+        }
+        
         if (template.preview_image instanceof File) {
           formData.append('preview_image', template.preview_image);
         }
