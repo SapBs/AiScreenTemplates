@@ -90,30 +90,72 @@ export const useMainStore = defineStore("main", {
       }
     },
 
+    async uploadMedia(file) {
+      if (!(file instanceof File)) {
+        throw new Error('Invalid file object');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await axios.post(`${API_BASE}/media/file`, formData, {
+          headers: {
+            Authorization: `Bearer ${this.authToken}`,
+            // Don't set Content-Type here, let the browser set it with the boundary for FormData
+          },
+        });
+        
+        // Check if we have a valid response with the URL
+        if (response.data && response.data.data && response.data.data.url) {
+          return response.data.data.url;
+        } else {
+          throw new Error('Invalid response format from media upload');
+        }
+      } catch (e) {
+        console.error("Media upload error", e);
+        this.error = e.response?.data?.message || "Failed to upload media";
+        throw e;
+      }
+    },
+
     async saveTemplate(template) {
       this.isLoading = true;
       this.error = null;
     
-      const formData = new FormData();
-      formData.append('name', template.name);
-      formData.append('description', template.description || '');
-      formData.append('width', `${template.width}`);
-      formData.append('height', `${template.height}`);
-      formData.append('objects', '');
-      
-      // Handle tags array
-      if (Array.isArray(template.tags)) {
-        template.tags.forEach(tag => formData.append('tags[]', tag));
-      }
+      try {
+        let previewImageUrl = template.preview_image;
+        
+        // If preview_image is a File, upload it first
+        if (template.preview_image instanceof File) {
+          previewImageUrl = await this.uploadMedia(template.preview_image);
+        }
     
-      // Handle preview_image
-      if (template.preview_image instanceof File) {
-        formData.append('preview_image', template.preview_image);
-      } else if (typeof template.preview_image === 'string') {
-        formData.append('preview_image', template.preview_image);
-      }
+        const formData = new FormData();
+        formData.append('name', template.name);
+        formData.append('description', template.description || '');
+        formData.append('width', `${template.width}`);
+        formData.append('height', `${template.height}`);
+        formData.append('objects', '');
+        
+        // Handle tags array
+        if (Array.isArray(template.tags)) {
+          template.tags.forEach(tag => formData.append('tags[]', tag));
+        }
     
-      return this.sendTemplateRequest(template.id, formData);
+        // Add the preview image URL
+        if (previewImageUrl) {
+          formData.append('preview_image', previewImageUrl);
+        }
+    
+        return this.sendTemplateRequest(template.id, formData);
+      } catch (e) {
+        console.error("Save template error", e);
+        this.error = e.response?.data?.message || "Failed to save template";
+        throw e;
+      } finally {
+        this.isLoading = false;
+      }
     },
     
     async sendTemplateRequest(templateId, formData) {

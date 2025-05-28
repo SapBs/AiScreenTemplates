@@ -53,6 +53,7 @@
               @blur="handleImageUrlChange"
               class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               placeholder="Enter image URL"
+              :disabled="isUploading"
             />
             <span class="px-3 py-2 text-gray-500">or</span>
             <input
@@ -60,6 +61,7 @@
               accept="image/*"
               @change="handleFileUpload"
               class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              :disabled="isUploading"
             />
           </div>
           <div v-if="imagePreview" class="mt-2">
@@ -67,6 +69,9 @@
           </div>
           <div v-if="imageError" class="text-sm text-red-600">
             {{ imageError }}
+          </div>
+          <div v-if="isUploading" class="text-sm text-gray-600">
+            Uploading image...
           </div>
         </div>
       </div>
@@ -106,6 +111,7 @@ const store = useMainStore();
 const imageUrl = ref("");
 const imagePreview = ref("");
 const imageError = ref("");
+const isUploading = ref(false);
 
 const isEdit = ref(false);
 const form = ref({
@@ -150,6 +156,7 @@ const handleImageUrlChange = async () => {
     return;
   }
 
+  isUploading.value = true;
   try {
     imageError.value = "";
     const response = await fetch(imageUrl.value);
@@ -166,6 +173,8 @@ const handleImageUrlChange = async () => {
     imagePreview.value = "";
     form.value.preview_image = "";
     console.error("Image loading error:", error);
+  } finally {
+    isUploading.value = false;
   }
 };
 
