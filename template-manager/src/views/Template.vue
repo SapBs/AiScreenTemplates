@@ -46,10 +46,20 @@
       </div>
       <div>
         <label class="block mb-1 font-medium">Preview Image URL</label>
-        <input 
-          v-model="form.preview_image" 
-          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
-        />
+        <div class="space-y-2">
+          <input
+            v-model="imageUrl"
+            @blur="handleImageUrlChange"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            placeholder="Enter image URL"
+          />
+          <div v-if="imagePreview" class="mt-2">
+            <img :src="imagePreview" alt="Preview" class="max-h-40 rounded-lg" />
+          </div>
+          <div v-if="imageError" class="text-sm text-red-600">
+            {{ imageError }}
+          </div>
+        </div>
       </div>
       <div class="flex gap-4">
         <button 
@@ -84,6 +94,9 @@ import LoadingOverlay from "../components/LoadingOverlay.vue";
 const route = useRoute();
 const router = useRouter();
 const store = useMainStore();
+const imageUrl = ref("");
+const imagePreview = ref("");
+const imageError = ref("");
 
 const isEdit = ref(false);
 const form = ref({
@@ -112,9 +125,40 @@ onMounted(() => {
         height: parseInt(template.height),
         preview_image: template.preview_image || "",
       };
+      if (template.preview_image) {
+        imagePreview.value = template.preview_image;
+        imageUrl.value = template.preview_image;
+      }
     }
   }
 });
+
+const handleImageUrlChange = async () => {
+  if (!imageUrl.value) {
+    imagePreview.value = "";
+    form.value.preview_image = "";
+    imageError.value = "";
+    return;
+  }
+
+  try {
+    imageError.value = "";
+    const response = await fetch(imageUrl.value);
+    if (!response.ok) throw new Error('Failed to fetch image');
+    
+    const blob = await response.blob();
+    imagePreview.value = URL.createObjectURL(blob);
+
+    // Create a File object from the blob
+    const file = new File([blob], 'preview.jpg', { type: blob.type });
+    form.value.preview_image = file;
+  } catch (error) {
+    imageError.value = "Failed to load image. Please check the URL.";
+    imagePreview.value = "";
+    form.value.preview_image = "";
+    console.error("Image loading error:", error);
+  }
+};
 
 const save = async () => {
   if (!form.value.name.trim()) {
@@ -138,7 +182,6 @@ const save = async () => {
     await store.saveTemplate(newTemplate);
     router.push("/");
   } catch (error) {
-    // Error is already handled in the store
     console.error("Save failed:", error);
   }
 };

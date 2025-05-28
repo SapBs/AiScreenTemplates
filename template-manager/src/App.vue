@@ -1,16 +1,18 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <nav class="bg-white dark:bg-gray-800 shadow-sm">
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <nav class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
-            <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Template Manager</h1>
+            <h1 class="text-xl font-semibold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+              Template Manager
+            </h1>
           </div>
-          <div class="flex items-center">
+          <div class="flex items-center space-x-4">
             <button
               v-if="store.isAuthenticated"
               @click="logout"
-              class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
             >
               Logout
             </button>
