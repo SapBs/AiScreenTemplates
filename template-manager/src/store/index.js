@@ -132,8 +132,8 @@ export const useMainStore = defineStore("main", {
         const formData = new FormData();
         formData.append('name', template.name);
         formData.append('description', template.description || '');
-        formData.append('width', `${template.width}`);
-        formData.append('height', `${template.height}`);
+        formData.append('width', template.width);
+        formData.append('height', template.height);
         formData.append('objects', '');
         formData.append('tags', template.tags || []);
         if (template.preview_image instanceof File) {
