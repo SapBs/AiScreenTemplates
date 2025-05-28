@@ -1,7 +1,11 @@
 import { defineStore } from "pinia";
 import axios from "axios";
 
+// Remove trailing slash to prevent redirects
 const API_BASE = 'https://dev-api.aiscreen.io/api/v1';
+
+// Configure axios defaults for CORS
+axios.defaults.withCredentials = true;
 
 // Remove the global Content-Type header since we're using FormData
 // axios.defaults.headers.common['Content-Type'] = 'application/json';
@@ -30,7 +34,8 @@ export const useMainStore = defineStore("main", {
           password: userPassword,
         }, {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           }
         });
         this.authToken = response.data.token;
@@ -55,7 +60,8 @@ export const useMainStore = defineStore("main", {
         const response = await axios.get(`${API_BASE}/canvas_templates`, {
           headers: { 
             Authorization: `Bearer ${this.authToken}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
         });
         this.templates = response.data;
@@ -179,7 +185,7 @@ export const useMainStore = defineStore("main", {
       const config = {
         headers: { 
           Authorization: `Bearer ${this.authToken}`,
-          // Don't set Content-Type here, let the browser set it with the boundary for FormData
+          'Accept': 'application/json'
         },
       };
     
@@ -193,7 +199,7 @@ export const useMainStore = defineStore("main", {
           );
         } else {
           await axios.post(
-            `${API_BASE}/canvas_templates/`,
+            `${API_BASE}/canvas_templates`,
             formData,
             config
           );
