@@ -112,9 +112,8 @@ export const useMainStore = defineStore("main", {
     
         const response = await this.sendTemplateRequest(template.id, formData);
         
-        // Add a delay before fetching templates to allow image processing
         if (template.preview_image instanceof File) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
         
         await this.fetchTemplates();

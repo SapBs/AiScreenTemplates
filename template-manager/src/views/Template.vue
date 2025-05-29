@@ -158,7 +158,6 @@ const save = async () => {
     router.push("/");
   } catch (error) {
     console.error("Save failed:", error);
-    // Show more detailed error message
     if (error.response?.data?.message) {
       imagePreview.value = "";
     } else if (error.message) {

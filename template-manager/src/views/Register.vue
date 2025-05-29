@@ -174,7 +174,6 @@ const resetForm = ref({
 });
 
 onMounted(() => {
-  // If token is present in URL, switch to password reset form
   if (resetToken.value) {
     isPasswordReset.value = true;
   }
@@ -188,7 +187,6 @@ const handleRegister = async () => {
 
   try {
     await store.register(form.value);
-    // Clear form after successful registration
     form.value = {
       name: "",
       email: "",
@@ -202,7 +200,6 @@ const handleRegister = async () => {
 
 const handlePasswordReset = async () => {
   if (resetToken.value) {
-    // Reset password with token
     if (resetForm.value.password !== resetForm.value.password_confirmation) {
       store.error = "Passwords do not match";
       return;
@@ -214,16 +211,13 @@ const handlePasswordReset = async () => {
         password: resetForm.value.password,
         password_confirmation: resetForm.value.password_confirmation
       });
-      // Redirect to login after successful password reset
       router.push("/login");
     } catch (error) {
       console.error("Password reset failed:", error);
     }
   } else {
-    // Request password reset
     try {
       await store.requestPasswordReset(resetForm.value.email);
-      // Clear email after successful request
       resetForm.value.email = "";
     } catch (error) {
       console.error("Password reset request failed:", error);
